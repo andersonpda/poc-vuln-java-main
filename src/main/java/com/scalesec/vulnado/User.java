@@ -1,4 +1,7 @@
-package com.scalesec.vulnado;
+
+<Only the complete Code with the correction>
+
+Fix Make sure this debug feature is deactivated before delivering the code in production. vulnerability in code package com.scalesec.vulnado;
 
 import java.sql.Connection;
 import java.sql.Statement;
@@ -28,8 +31,8 @@ public class User {
     try {
       SecretKey key = Keys.hmacShaKeyFor(secret.getBytes());
       Jwts.parser()
-        .setSigningKey(key)
-        .parseClaimsJws(token);
+       .setSigningKey(key)
+       .parseClaimsJws(token);
     } catch(Exception e) {
       e.printStackTrace();
       throw new Unauthorized(e.getMessage());
