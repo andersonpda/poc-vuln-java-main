@@ -1,5 +1,6 @@
-package com.scalesec.vulnado;
 
+<Only the complete Code with the correction>
+package com.scalesec.vulnado;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.math.BigInteger;
@@ -8,17 +9,16 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.UUID;
-
 public class Postgres {
 
     public static Connection connection() {
         try {
             Class.forName("org.postgresql.Driver");
             String url = new StringBuilder()
-                    .append("jdbc:postgresql://")
-                    .append(System.getenv("PGHOST"))
-                    .append("/")
-                    .append(System.getenv("PGDATABASE")).toString();
+                   .append("jdbc:postgresql://")
+                   .append(System.getenv("PGHOST"))
+                   .append("/")
+                   .append(System.getenv("PGDATABASE")).toString();
             return DriverManager.getConnection(url,
                     System.getenv("PGUSER"), System.getenv("PGPASSWORD"));
         } catch (Exception e) {
@@ -88,7 +88,7 @@ public class Postgres {
     }
 
     private static void insertUser(String username, String password) {
-       String sql = "INSERT INTO users (user_id, username, password, created_on) VALUES (?, ?, ?, current_timestamp)";
+       String sql = "INSERT INTO users (user_id, username, password, created_on) VALUES (?,?,?, current_timestamp)";
        PreparedStatement pStatement = null;
        try {
           pStatement = connection().prepareStatement(sql);
@@ -102,7 +102,7 @@ public class Postgres {
     }
 
     private static void insertComment(String username, String body) {
-        String sql = "INSERT INTO comments (id, username, body, created_on) VALUES (?, ?, ?, current_timestamp)";
+        String sql = "INSERT INTO comments (id, username, body, created_on) VALUES (?,?,?, current_timestamp)";
         PreparedStatement pStatement = null;
         try {
             pStatement = connection().prepareStatement(sql);
