@@ -33,14 +33,14 @@ public class Comment {
     }
   }
 
-  public static List<Comment> fetch_all() {
+  public static List<Comment> fetch_all(int user) {
     Statement stmt = null;
     List<Comment> comments = new ArrayList();
     try {
       Connection cxn = Postgres.connection();
       stmt = cxn.createStatement();
 
-      String query = "select * from comments;";
+      String query = "select * from comments Where userId = " + user;
       ResultSet rs = stmt.executeQuery(query);
       while (rs.next()) {
         String id = rs.getString("id");
@@ -61,7 +61,7 @@ public class Comment {
 
   public static Boolean delete(String id) {
     try {
-      String sql = "DELETE FROM comments where id = ?";
+      String sql = "DELETE FROM comments where id = " + id;
       Connection con = Postgres.connection();
       PreparedStatement pStatement = con.prepareStatement(sql);
       pStatement.setString(1, id);
