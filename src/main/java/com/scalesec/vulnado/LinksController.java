@@ -1,4 +1,7 @@
-package com.scalesec.vulnado;
+
+<Only the complete Code with the correction>
+
+Fix Make sure allowing safe and unsafe HTTP methods is safe here. vulnerability in code package com.scalesec.vulnado;
 
 import org.springframework.boot.*;
 import org.springframework.http.HttpStatus;
