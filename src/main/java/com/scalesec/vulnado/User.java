@@ -1,13 +1,15 @@
-package com.scalesec.vulnado;
 
-import java.sql.Connection;
-import java.sql.Statement;
-import java.sql.ResultSet;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.JwtParser;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
+<Only the complete Code with the correction>
+
+Fix
+import java.security.Key;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 
 public class User {
   public String id, username, hashedPassword;
@@ -19,24 +21,44 @@ public class User {
   }
 
   public String token(String secret) {
-    SecretKey key = Keys.hmacShaKeyFor(secret.getBytes());
-    String jws = Jwts.builder().setSubject(this.username).signWith(key).compact();
-    return jws;
+    try {
+      SecretKey key = generateSecretKey(secret);
+      String jws = Jwts.builder()
+       .setSubject(this.username)
+       .signWith(key)
+       .compact();
+      return jws;
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new RuntimeException(e);
+    }
   }
 
-  public static void assertAuth(String secret, String token) {
+  private static SecretKey generateSecretKey(String password) throws NoSuchAlgorithmException, InvalidKeySpecException {
+    byte[] salt = new SecureRandom().nextBytes();
+    byte[] passwordKey = pbkdf2(password.toCharArray(), salt, 10000, 64);
+    SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512");
+    PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray(), salt, 10000, 64);
+    return keyFactory.generateSecret(keySpec);
+  }
+
+  private static byte[] pbkdf2(char[] password, byte[] salt, int iterations, int keyLength) throws NoSuchAlgorithmException, InvalidKeySpecException {
+    SecretKey key = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512").generateSecret(new PBEKeySpec(password, salt, iterations, keyLength));
+    return key.getEncoded();
+  }
+
+  public static void assertAuth(String secret, String token) throws Exception {
     try {
-      SecretKey key = Keys.hmacShaKeyFor(secret.getBytes());
+      SecretKey key = generateSecretKey(secret);
       Jwts.parser()
-        .setSigningKey(key)
-        .parseClaimsJws(token);
-    } catch(Exception e) {
-      e.printStackTrace();
+       .setSigningKey(key)
+       .parseClaimsJws(token);
+    } catch (Exception e) {
       throw new Unauthorized(e.getMessage());
     }
   }
 
-  public static User fetch(String un) {
+  public static User fetch(String un) throws Exception {
     Statement stmt = null;
     User user = null;
     try {
