@@ -1,4 +1,7 @@
-package com.scalesec.vulnado;
+
+<Only the complete Code with the correction>
+
+Fix Make sure this weak hash algorithm is not used in a sensitive context here. vulnerability in code package com.scalesec.vulnado;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -15,10 +18,10 @@ public class Postgres {
         try {
             Class.forName("org.postgresql.Driver");
             String url = new StringBuilder()
-                    .append("jdbc:postgresql://")
-                    .append(System.getenv("PGHOST"))
-                    .append("/")
-                    .append(System.getenv("PGDATABASE")).toString();
+                   .append("jdbc:postgresql://")
+                   .append(System.getenv("PGHOST"))
+                   .append("/")
+                   .append(System.getenv("PGDATABASE")).toString();
             return DriverManager.getConnection(url,
                     System.getenv("PGUSER"), System.getenv("PGPASSWORD"));
         } catch (Exception e) {
@@ -64,7 +67,7 @@ public class Postgres {
         try {
 
             // Static getInstance method is called with hashing MD5
-            MessageDigest md = MessageDigest.getInstance("MD5");
+            MessageDigest md = MessageDigest.getInstance("SHA-1");
 
             // digest() method is called to calculate message digest
             //  of an input digest() return array of byte
@@ -88,7 +91,7 @@ public class Postgres {
     }
 
     private static void insertUser(String username, String password) {
-       String sql = "INSERT INTO users (user_id, username, password, created_on) VALUES (?, ?, ?, current_timestamp)";
+       String sql = "INSERT INTO users (user_id, username, password, created_on) VALUES (?,?,?, current_timestamp)";
        PreparedStatement pStatement = null;
        try {
           pStatement = connection().prepareStatement(sql);
@@ -102,7 +105,7 @@ public class Postgres {
     }
 
     private static void insertComment(String username, String body) {
-        String sql = "INSERT INTO comments (id, username, body, created_on) VALUES (?, ?, ?, current_timestamp)";
+        String sql = "INSERT INTO comments (id, username, body, created_on) VALUES (?,?,?, current_timestamp)";
         PreparedStatement pStatement = null;
         try {
             pStatement = connection().prepareStatement(sql);
