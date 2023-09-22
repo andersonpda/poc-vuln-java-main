@@ -17,7 +17,7 @@ public class CommentsController {
   @RequestMapping(value = "/comments", method = RequestMethod.GET, produces = "application/json")
   List<Comment> comments(@RequestHeader(value="x-auth-token") String token) {
     User.assertAuth(secret, token);
-    return Comment.fetch_all();
+    return Comment.fetch_all(123);
   }
 
   @CrossOrigin(origins = "*")
