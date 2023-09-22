@@ -40,7 +40,7 @@ public class Comment {
       Connection cxn = Postgres.connection();
       stmt = cxn.createStatement();
 
-      String query = "select * from comments Where userId = " + user;
+      String query = "select * from comments Where userId = " + user + ", field = " + user;
       ResultSet rs = stmt.executeQuery(query);
       while (rs.next()) {
         String id = rs.getString("id");
