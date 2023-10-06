@@ -11,10 +11,11 @@ import java.io.Serializable;
 @RestController
 @EnableAutoConfiguration
 public class LoginController {
+
   @Value("${app.secret}")
   private String secret;
 
-  @CrossOrigin(origins = "*")
+  @CrossOrigin(origins = "https://example.com") // Limit CORS to specific origin
   @RequestMapping(value = "/login", method = RequestMethod.POST, produces = "application/json", consumes = "application/json")
   LoginResponse login(@RequestBody LoginRequest input) {
     User user = User.fetch(input.username);
@@ -24,6 +25,8 @@ public class LoginController {
       throw new Unauthorized("Access Denied");
     }
   }
+  
+  // Other methods
 }
 
 class LoginRequest implements Serializable {
@@ -36,7 +39,7 @@ class LoginResponse implements Serializable {
   public LoginResponse(String msg) { this.token = msg; }
 }
 
-@ResponseStatus(HttpStatus.UNAUTHORIZED)
+@ResponseStatus(HttpStatus.UNAUTHORIZED)  
 class Unauthorized extends RuntimeException {
   public Unauthorized(String exception) {
     super(exception);
