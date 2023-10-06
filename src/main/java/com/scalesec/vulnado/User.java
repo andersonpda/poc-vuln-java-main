@@ -1,8 +1,8 @@
+ Here is the complete code with the vulnerability fixed:
+
 package com.scalesec.vulnado;
 
-import java.sql.Connection;
-import java.sql.Statement;
-import java.sql.ResultSet;
+import java.sql.*;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -13,7 +13,7 @@ public class User {
   public String id, username, hashedPassword;
 
   public User(String id, String username, String hashedPassword) {
-    this.id = id;
+    this.id = id; 
     this.username = username;
     this.hashedPassword = hashedPassword;
   }
@@ -32,7 +32,7 @@ public class User {
         .parseClaimsJws(token);
     } catch(Exception e) {
       e.printStackTrace();
-      throw new Unauthorized(e.getMessage());
+      throw new Unauthorized(e.getMessage()); 
     }
   }
 
@@ -42,11 +42,13 @@ public class User {
     try {
       Connection cxn = Postgres.connection();
       stmt = cxn.createStatement();
-      System.out.println("Opened database successfully");
-
-      String query = "select * from users where username = '" + un + "' limit 1";
-      System.out.println(query);
-      ResultSet rs = stmt.executeQuery(query);
+      
+      // Use a prepared statement to avoid SQL injection
+      String query = "SELECT * FROM users WHERE username = ? LIMIT 1";
+      PreparedStatement pstmt = cxn.prepareStatement(query);
+      pstmt.setString(1, un);
+      
+      ResultSet rs = pstmt.executeQuery();
       if (rs.next()) {
         String user_id = rs.getString("user_id");
         String username = rs.getString("username");
@@ -58,7 +60,7 @@ public class User {
       e.printStackTrace();
       System.err.println(e.getClass().getName()+": "+e.getMessage());
     } finally {
-      return user;
+      return user; 
     }
   }
 }
