@@ -1,8 +1,9 @@
+ Here is the complete code with the vulnerability fixed:
+
 package com.scalesec.vulnado;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
@@ -28,6 +29,7 @@ public class Postgres {
         }
         return null;
     }
+    
     public static void setup(){
         try {
             System.out.println("Setting up Database...");
@@ -58,33 +60,17 @@ public class Postgres {
         }
     }
 
-    // Java program to calculate MD5 hash value
-    public static String md5(String input)
-    {
-        try {
-
-            // Static getInstance method is called with hashing MD5
-            MessageDigest md = MessageDigest.getInstance("MD5");
-
-            // digest() method is called to calculate message digest
-            //  of an input digest() return array of byte
-            byte[] messageDigest = md.digest(input.getBytes());
-
-            // Convert byte array into signum representation
-            BigInteger no = new BigInteger(1, messageDigest);
-
-            // Convert message digest into hex value
-            String hashtext = no.toString(16);
-            while (hashtext.length() < 32) {
-                hashtext = "0" + hashtext;
-            }
-            return hashtext;
+    // Use SHA-256 instead of weak MD5
+    public static String hash(String input) throws NoSuchAlgorithmException {
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        byte[] hash = md.digest(input.getBytes());
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : hash) {
+            String hex = Integer.toHexString(0xff & b);
+            if (hex.length() == 1) hexString.append('0');
+            hexString.append(hex);
         }
-
-        // For specifying wrong message digest algorithms
-        catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
+        return hexString.toString();
     }
 
     private static void insertUser(String username, String password) {
@@ -94,7 +80,10 @@ public class Postgres {
           pStatement = connection().prepareStatement(sql);
           pStatement.setString(1, UUID.randomUUID().toString());
           pStatement.setString(2, username);
-          pStatement.setString(3, md5(password));
+          
+          // Hash password with SHA-256
+          pStatement.setString(3, hash(password));
+          
           pStatement.executeUpdate();
        } catch(Exception e) {
          e.printStackTrace();
