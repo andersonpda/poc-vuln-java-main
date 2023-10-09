@@ -1,11 +1,19 @@
 $(document).ready(function(){
+
+  // Generate CSRF token
+  var csrfToken = Math.random().toString(36).substring(2); 
+  localStorage.csrfToken = csrfToken;
+
   var source = $("#comment-template").html();
   var template = Handlebars.compile(source);
 
-  // Add JWT to every request
-  $.ajaxSetup({ beforeSend: function(xhr) {
-    xhr.setRequestHeader('x-auth-token', localStorage.jwt);
-  }});
+  // Add JWT and CSRF token to every request
+  $.ajaxSetup({ 
+    beforeSend: function(xhr) {
+      xhr.setRequestHeader('x-auth-token', localStorage.jwt);
+      xhr.setRequestHeader('x-csrf-token', localStorage.csrfToken);
+    }
+  });
 
   // Helper Functions
   function setupDeleteCommentHandler() {
@@ -16,7 +24,10 @@ $(document).ready(function(){
 
       $.ajax({
         type: "DELETE",
-        url: "http://localhost:8080/comments/" + id
+        url: "http://localhost:8080/comments/" + id,
+        headers: {
+          'x-csrf-token': localStorage.csrfToken
+        }
       }).done(function(){
         $(parent).remove();
       });
@@ -45,6 +56,9 @@ $(document).ready(function(){
       data: JSON.stringify({username: username, body: comment}),
       dataType: "json",
       contentType: "application/json",
+      headers: {
+        'x-csrf-token': localStorage.csrfToken  
+      }
     }).done(function(){
         $('#new-comment').val('');
         fetchComments();
