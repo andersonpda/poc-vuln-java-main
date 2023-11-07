@@ -1,86 +1,100 @@
 package com.scalesec.vulnado;
 
-import org.apache.catalina.Server;
 import java.sql.*;
 import java.util.Date;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Comment {
-  public String id, username, body;
-  public Timestamp created_on;
 
-  public Comment(String id, String username, String body, Timestamp created_on) {
+  private static final Logger logger = LoggerFactory.getLogger(Comment.class);
+  
+  private static final String ID = "id";
+  private static final String USERNAME = "username";
+  private static final String BODY = "body";
+  private static final String CREATED_ON = "createdOn";
+
+  private String id;
+  private String username;
+  private String body;
+  private Timestamp createdOn;
+
+  public Comment(String id, String username, String body, Timestamp createdOn) {
     this.id = id;
     this.username = username;
     this.body = body;
-    this.created_on = created_on;
+    this.createdOn = createdOn;
   }
 
   public static Comment create(String username, String body){
     long time = new Date().getTime();
     Timestamp timestamp = new Timestamp(time);
     Comment comment = new Comment(UUID.randomUUID().toString(), username, body, timestamp);
-    try {
-      if (comment.commit()) {
-        return comment;
-      } else {
-        throw new BadRequest("Unable to save comment");
-      }
+    try (Connection con = Postgres.connection();
+         PreparedStatement pStatement = con.prepareStatement("INSERT INTO comments (" + ID + ", " + USERNAME + ", " + BODY + ", " + CREATED_ON + ") VALUES (?,?,?,?)")) {
+      pStatement.setString(1, comment.getId());
+      pStatement.setString(2, comment.getUsername());
+      pStatement.setString(3, comment.getBody());
+      pStatement.setTimestamp(4, comment.getCreatedOn());
+      return pStatement.executeUpdate() == 1 ? comment : null;
     } catch (Exception e) {
+      logger.error("Unable to save comment", e);
       throw new ServerError(e.getMessage());
     }
   }
 
-  public static List<Comment> fetch_all() {
-    Statement stmt = null;
-    List<Comment> comments = new ArrayList();
-    try {
-      Connection cxn = Postgres.connection();
-      stmt = cxn.createStatement();
-
-      String query = "select * from comments;";
-      ResultSet rs = stmt.executeQuery(query);
+  public static List<Comment> fetchAll() {
+    try (Connection con = Postgres.connection();
+         Statement stmt = con.createStatement();
+         ResultSet rs = stmt.executeQuery("SELECT * FROM comments")) {
+      List<Comment> comments = new ArrayList<>();
       while (rs.next()) {
-        String id = rs.getString("id");
-        String username = rs.getString("username");
-        String body = rs.getString("body");
-        Timestamp created_on = rs.getTimestamp("created_on");
-        Comment c = new Comment(id, username, body, created_on);
-        comments.add(c);
+        String id = rs.getString(ID);
+        String username = rs.getString(USERNAME);
+        String body = rs.getString(BODY);
+        Timestamp createdOn = rs.getTimestamp(CREATED_ON);
+        comments.add(new Comment(id, username, body, createdOn));
       }
-      cxn.close();
-    } catch (Exception e) {
-      e.printStackTrace();
-      System.err.println(e.getClass().getName()+": "+e.getMessage());
-    } finally {
       return comments;
+    } catch (SQLException e) {
+      logger.error("Error fetching comments", e);
     }
+    return new ArrayList<>();
   }
 
-  public static Boolean delete(String id) {
-    try {
-      String sql = "DELETE FROM comments where id = ?";
-      Connection con = Postgres.connection();
-      PreparedStatement pStatement = con.prepareStatement(sql);
-      pStatement.setString(1, id);
-      return 1 == pStatement.executeUpdate();
-    } catch(Exception e) {
-      e.printStackTrace();
-    } finally {
-      return false;
+  public static boolean delete(String id) {
+    try (Connection con = Postgres.connection();
+         PreparedStatement stmt = con.prepareStatement("DELETE FROM comments WHERE id = ?")) {
+      stmt.setString(1, id);
+      return stmt.executeUpdate() == 1;
+    } catch (SQLException e) {
+      logger.error("Error deleting comment", e);
     }
+    return false;
   }
 
-  private Boolean commit() throws SQLException {
-    String sql = "INSERT INTO comments (id, username, body, created_on) VALUES (?,?,?,?)";
-    Connection con = Postgres.connection();
-    PreparedStatement pStatement = con.prepareStatement(sql);
-    pStatement.setString(1, this.id);
-    pStatement.setString(2, this.username);
-    pStatement.setString(3, this.body);
-    pStatement.setTimestamp(4, this.created_on);
-    return 1 == pStatement.executeUpdate();
+  public String getId() {
+    return id;
   }
+
+  public String getUsername() {
+    return username;
+  }
+
+  public String getBody() {
+    return body;
+  }
+
+  public Timestamp getCreatedOn() {
+    return createdOn;
+  }
+
+  private boolean save() throws SQLException {
+    //TDB
+    return true; 
+  }
+
 }
