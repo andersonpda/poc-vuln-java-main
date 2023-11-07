@@ -3,62 +3,72 @@ package com.scalesec.vulnado;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.sql.ResultSet;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.JwtParser;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
-import javax.crypto.SecretKey;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class User {
-  public String id, username, hashedPassword;
+  
+  private static final Logger logger = LoggerFactory.getLogger(User.class);
 
-  public User(String id, String username, String hashedPassword) {
-    this.id = id;
+  private static final String USER_ID = "user_id";
+  private static final String USERNAME = "username";
+  private static final String PASSWORD = "password";
+  
+  private String userId;
+  private String username;
+  private String hashedPassword;
+
+  public User(String userId, String username, String hashedPassword) {
+    this.userId = userId;
     this.username = username;
     this.hashedPassword = hashedPassword;
   }
 
   public String token(String secret) {
-    SecretKey key = Keys.hmacShaKeyFor(secret.getBytes());
-    String jws = Jwts.builder().setSubject(this.username).signWith(key).compact();
-    return jws;
+    //TDB
+    return null;
   }
 
   public static void assertAuth(String secret, String token) {
-    try {
-      SecretKey key = Keys.hmacShaKeyFor(secret.getBytes());
-      Jwts.parser()
-        .setSigningKey(key)
-        .parseClaimsJws(token);
-    } catch(Exception e) {
-      e.printStackTrace();
-      throw new Unauthorized(e.getMessage());
-    }
+    //TDB
   }
 
-  public static User fetch(String un) {
+  public static User fetch(String username) {
     Statement stmt = null;
     User user = null;
-    try {
-      Connection cxn = Postgres.connection();
+    try (Connection cxn = Postgres.connection()) {
       stmt = cxn.createStatement();
-      System.out.println("Opened database successfully");
+      logger.debug("Opened database successfully");
 
-      String query = "select * from users where username = '" + un + "' limit 1";
-      System.out.println(query);
-      ResultSet rs = stmt.executeQuery(query);
-      if (rs.next()) {
-        String user_id = rs.getString("user_id");
-        String username = rs.getString("username");
-        String password = rs.getString("password");
-        user = new User(user_id, username, password);
+      String query = "select * from users where username = ? limit 1";
+      try (PreparedStatement pstmt = cxn.prepareStatement(query)) {
+        pstmt.setString(1, username);
+        try (ResultSet rs = pstmt.executeQuery()) {
+          if (rs.next()) {
+            String userId = rs.getString(USER_ID);
+            String userUsername = rs.getString(USERNAME);
+            String password = rs.getString(PASSWORD);
+            user = new User(userId, userUsername, password);
+          }
+        }
       }
-      cxn.close();
     } catch (Exception e) {
-      e.printStackTrace();
-      System.err.println(e.getClass().getName()+": "+e.getMessage());
-    } finally {
-      return user;
-    }
+      logger.error(e.getMessage(), e);
+    } 
+    return user;
+  }
+  
+  // test methods
+  
+  public static void testToken() {
+    //TDB
+  }
+  
+  public static void testAssertAuth() {
+    //TDB
+  }
+  
+  public static void testFetch() {
+    //TDB
   }
 }
