@@ -1,10 +1,8 @@
 package com.scalesec.vulnado;
 
-import org.springframework.boot.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.boot.autoconfigure.*;
-import org.springframework.stereotype.*;
 import org.springframework.beans.factory.annotation.*;
 import java.io.Serializable;
 
@@ -14,11 +12,11 @@ public class LoginController {
   @Value("${app.secret}")
   private String secret;
 
-  @CrossOrigin(origins = "*")
-  @RequestMapping(value = "/login", method = RequestMethod.POST, produces = "application/json", consumes = "application/json")
+  @CrossOrigin(origins = "http://trustedwebsite.com") // Adjusted for CORS
+  @PostMapping(value = "/login", produces = "application/json", consumes = "application/json") // Replaced @RequestMapping with @PostMapping
   LoginResponse login(@RequestBody LoginRequest input) {
-    User user = User.fetch(input.username);
-    if (Postgres.md5(input.password).equals(user.hashedPassword)) {
+    User user = User.fetch(input.getUsername()); // Used accessor method
+    if (Postgres.md5(input.getPassword()).equals(user.hashedPassword)) { // Used accessor method
       return new LoginResponse(user.token(secret));
     } else {
       throw new Unauthorized("Access Denied");
@@ -27,13 +25,28 @@ public class LoginController {
 }
 
 class LoginRequest implements Serializable {
-  public String username;
-  public String password;
+  private String username; // Made private
+  private String password; // Made private
+
+  // Accessor methods
+  public String getUsername() {
+    return this.username;
+  }
+
+  public String getPassword() {
+    return this.password;
+  }
 }
 
 class LoginResponse implements Serializable {
-  public String token;
+  private static final String token; // Made private and final
+
   public LoginResponse(String msg) { this.token = msg; }
+
+  // Accessor method
+  public static String getToken() {
+    return token;
+  }
 }
 
 @ResponseStatus(HttpStatus.UNAUTHORIZED)
